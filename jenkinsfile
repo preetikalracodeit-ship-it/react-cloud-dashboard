@@ -1,6 +1,13 @@
 pipeline {
     agent any
 
+    environment {
+        AWS_REGION = 'us-east-1'
+        AWS_ACCOUNT_ID = '389083921036'
+        ECR_REPOSITORY = 'react-cloud-dashboard'
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -23,7 +30,28 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t react-cloud-dashboard:${BUILD_NUMBER} .'
+                sh 'docker build -t ${ECR_REPOSITORY}:${BUILD_NUMBER} .'
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
+                sh '''
+                    aws ecr get-login-password --region ${AWS_REGION} |
+                    docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                '''
+            }
+        }
+
+        stage('Docker Push to ECR') {
+            steps {
+                sh '''
+                    docker tag ${ECR_REPOSITORY}:${BUILD_NUMBER} \
+                    ${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
+
+                    docker push \
+                    ${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
+                '''
             }
         }
     }
