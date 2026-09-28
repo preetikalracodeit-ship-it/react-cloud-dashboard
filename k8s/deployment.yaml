@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-cloud-dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: react-cloud-dashboard
+  template:
+    metadata:
+      labels:
+        app: react-cloud-dashboard
+    spec:
+      containers:
+        - name: react-cloud-dashboard
+          image: 389083921036.dkr.ecr.us-east-1.amazonaws.com/react-cloud-dashboard:7
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
