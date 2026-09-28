@@ -6,6 +6,7 @@ pipeline {
         AWS_ACCOUNT_ID = '389083921036'
         ECR_REPOSITORY = 'react-cloud-dashboard'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        EKS_CLUSTER = 'react-cloud-cluster'
     }
 
     stages {
@@ -51,6 +52,21 @@ pipeline {
 
                     docker push \
                     ${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                    aws eks update-kubeconfig \
+                    --region ${AWS_REGION} \
+                    --name ${EKS_CLUSTER}
+
+                    kubectl set image deployment/react-cloud-dashboard \
+                    react-cloud-dashboard=${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
+
+                    kubectl rollout status deployment/react-cloud-dashboard
                 '''
             }
         }
